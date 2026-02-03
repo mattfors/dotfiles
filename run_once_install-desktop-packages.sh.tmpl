@@ -45,7 +45,7 @@ case "$OS" in
         # Install packages (using || true to not fail if a package is already installed or unavailable)
         echo "Installing packages..."
         for pkg in "${PACKAGES[@]}"; do
-            if dpkg -l | grep -q "^ii  $pkg "; then
+            if dpkg -l | grep -qF "^ii  $pkg "; then
                 echo "  - $pkg is already installed"
             else
                 echo "  - Installing $pkg..."

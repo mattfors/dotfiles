@@ -124,8 +124,7 @@ If you need to re-run the setup scripts (they normally only run once):
 chezmoi state delete-bucket --bucket=scriptState
 chezmoi apply -v
 
-# Or run a specific script manually
-chezmoi cd
-bash run_once_install-chrome.sh.tmpl
+# Note: Scripts are templates and should be run through chezmoi
+# to ensure proper template processing
 ```
 
