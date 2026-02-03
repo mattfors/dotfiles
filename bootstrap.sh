@@ -1,82 +1,32 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Bootstrap script for dotfiles on Linux Mint
-# This script installs git, chezmoi, and curl
+os_name="$(uname -s)"
 
-set -e
-
-echo "=================================="
-echo "Dotfiles Bootstrap Script"
-echo "=================================="
-echo ""
-
-# Check if running on Linux Mint
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    if [[ "$NAME" != *"Linux Mint"* ]]; then
-        echo "Warning: This script is designed for Linux Mint but detected: $NAME"
-        echo "Continuing anyway..."
-        echo ""
-    fi
+if [ "$os_name" = "Linux" ]; then
+  sudo apt-get update
+  sudo apt-get install -y git curl
+elif [ "$os_name" = "Darwin" ]; then
+  if ! xcode-select -p >/dev/null 2>&1; then
+    xcode-select --install || true
+  fi
 else
-    echo "Warning: Could not detect OS. Continuing anyway..."
-    echo ""
+  echo "Unsupported OS: $os_name"
+  exit 1
 fi
 
-# Update package list
-echo "Updating package list..."
-sudo apt update
-
-# Install git
-echo ""
-echo "Installing git..."
-if command -v git &> /dev/null; then
-    echo "git is already installed ($(git --version))"
-else
-    sudo apt install -y git
-    echo "git installed successfully"
+if ! command -v chezmoi >/dev/null 2>&1; then
+  sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
 fi
 
-# Install curl
-echo ""
-echo "Installing curl..."
-if command -v curl &> /dev/null; then
-    echo "curl is already installed ($(curl --version | head -n1))"
-else
-    sudo apt install -y curl
-    echo "curl installed successfully"
+chezmoi_bin="$(command -v chezmoi || true)"
+if [ -z "$chezmoi_bin" ] && [ -x "$HOME/.local/bin/chezmoi" ]; then
+  chezmoi_bin="$HOME/.local/bin/chezmoi"
 fi
 
-# Install chezmoi
-echo ""
-echo "Installing chezmoi..."
-if command -v chezmoi &> /dev/null; then
-    echo "chezmoi is already installed ($(chezmoi --version))"
-else
-    # Install chezmoi using the official install script
-    sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
-    
-    # Add to PATH if not already there
-    if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc" 2>/dev/null; then
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
-        export PATH="$HOME/.local/bin:$PATH"
-        echo "Added $HOME/.local/bin to PATH in .bashrc"
-    fi
-    
-    echo "chezmoi installed successfully"
+if [ -z "$chezmoi_bin" ]; then
+  echo "chezmoi installation failed."
+  exit 1
 fi
 
-echo ""
-echo "=================================="
-echo "Bootstrap completed successfully!"
-echo "=================================="
-echo ""
-echo "Installed tools:"
-echo "  - git: $(git --version)"
-echo "  - curl: $(curl --version | head -n1)"
-if command -v chezmoi &> /dev/null; then
-    echo "  - chezmoi: $(chezmoi --version)"
-else
-    echo "  - chezmoi: $("$HOME/.local/bin/chezmoi" --version)"
-fi
-echo ""
+"$chezmoi_bin" init --apply https://github.com/mattfors/dotfiles.git
