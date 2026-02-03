@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# Install base desktop packages for Linux
+# This script will only run once (managed by chezmoi)
+
+set -e
+
+echo "Installing base desktop packages..."
+
+# Detect the OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+else
+    echo "Error: Cannot detect OS"
+    exit 1
+fi
+
+# Define common desktop packages
+# These are essential tools for a base desktop environment
+PACKAGES=(
+    "vim"               # Text editor
+    "git"               # Version control (may already be installed)
+    "curl"              # HTTP client (may already be installed)
+    "wget"              # Download tool
+    "htop"              # Process viewer
+    "tree"              # Directory tree viewer
+    "unzip"             # Archive extraction
+    "zip"               # Archive creation
+    "build-essential"   # Compilation tools (Debian-based)
+    "ca-certificates"   # SSL certificates
+    "gnupg"             # GPG encryption
+    "software-properties-common"  # Repository management
+)
+
+# Install packages based on the OS
+case "$OS" in
+    ubuntu|debian|linuxmint|pop)
+        echo "Detected Debian-based system: $OS"
+        
+        # Update package list
+        echo "Updating package list..."
+        sudo apt update
+        
+        # Install packages (using || true to not fail if a package is already installed or unavailable)
+        echo "Installing packages..."
+        for pkg in "${PACKAGES[@]}"; do
+            if dpkg -l | grep -qF "^ii  $pkg "; then
+                echo "  - $pkg is already installed"
+            else
+                echo "  - Installing $pkg..."
+                sudo apt install -y "$pkg" || echo "  - Warning: Could not install $pkg"
+            fi
+        done
+        
+        echo "Base desktop packages installed successfully!"
+        ;;
+    fedora|rhel|centos)
+        echo "Detected Red Hat-based system: $OS"
+        
+        # Adjust packages for Red Hat-based systems
+        PACKAGES=(
+            "vim"
+            "git"
+            "curl"
+            "wget"
+            "htop"
+            "tree"
+            "unzip"
+            "zip"
+            "@development-tools"  # Equivalent to build-essential
+            "ca-certificates"
+            "gnupg2"
+        )
+        
+        echo "Installing packages..."
+        for pkg in "${PACKAGES[@]}"; do
+            echo "  - Installing $pkg..."
+            sudo dnf install -y "$pkg" || sudo yum install -y "$pkg" || echo "  - Warning: Could not install $pkg"
+        done
+        
+        echo "Base desktop packages installed successfully!"
+        ;;
+    arch|manjaro)
+        echo "Detected Arch-based system: $OS"
+        
+        # Adjust packages for Arch-based systems
+        PACKAGES=(
+            "vim"
+            "git"
+            "curl"
+            "wget"
+            "htop"
+            "tree"
+            "unzip"
+            "zip"
+            "base-devel"  # Equivalent to build-essential
+            "ca-certificates"
+            "gnupg"
+        )
+        
+        echo "Installing packages..."
+        for pkg in "${PACKAGES[@]}"; do
+            echo "  - Installing $pkg..."
+            sudo pacman -S --noconfirm --needed "$pkg" || echo "  - Warning: Could not install $pkg"
+        done
+        
+        echo "Base desktop packages installed successfully!"
+        ;;
+    *)
+        echo "Unsupported OS: $OS"
+        echo "Please install base packages manually."
+        exit 1
+        ;;
+esac
+
+echo "Done!"
