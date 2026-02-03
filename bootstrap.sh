@@ -57,7 +57,7 @@ else
     sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
     
     # Add to PATH if not already there
-    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+    if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc" 2>/dev/null; then
         echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
         export PATH="$HOME/.local/bin:$PATH"
         echo "Added $HOME/.local/bin to PATH in .bashrc"
@@ -74,5 +74,9 @@ echo ""
 echo "Installed tools:"
 echo "  - git: $(git --version)"
 echo "  - curl: $(curl --version | head -n1)"
-echo "  - chezmoi: $(chezmoi --version)"
+if command -v chezmoi &> /dev/null; then
+    echo "  - chezmoi: $(chezmoi --version)"
+else
+    echo "  - chezmoi: $("$HOME/.local/bin/chezmoi" --version)"
+fi
 echo ""

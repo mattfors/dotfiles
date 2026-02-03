@@ -9,6 +9,12 @@ My personal dotfiles managed with [chezmoi](https://www.chezmoi.io/).
 To set up a new Linux Mint system with the required tools, run:
 
 ```bash
+# Download and review the script first (recommended)
+curl -fsSL https://raw.githubusercontent.com/mattfors/dotfiles/main/bootstrap.sh -o bootstrap.sh
+less bootstrap.sh
+bash bootstrap.sh
+
+# Or run directly (use with caution)
 curl -fsSL https://raw.githubusercontent.com/mattfors/dotfiles/main/bootstrap.sh | bash
 ```
 
