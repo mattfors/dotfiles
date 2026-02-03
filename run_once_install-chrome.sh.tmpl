@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# Install Google Chrome on Linux
+# This script will only run once (managed by chezmoi)
+
+set -e
+
+echo "Installing Google Chrome..."
+
+# Check if Chrome is already installed
+if command -v google-chrome &> /dev/null; then
+    echo "Google Chrome is already installed: $(google-chrome --version)"
+    exit 0
+fi
+
+# Detect the OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+else
+    echo "Error: Cannot detect OS"
+    exit 1
+fi
+
+# Install Chrome based on the OS
+case "$OS" in
+    ubuntu|debian|linuxmint|pop)
+        echo "Detected Debian-based system: $OS"
+        
+        # Download the Chrome .deb package
+        TEMP_DEB="$(mktemp)" || exit 1
+        wget -O "$TEMP_DEB" 'https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'
+        
+        # Install Chrome
+        sudo apt install -y "$TEMP_DEB"
+        
+        # Clean up
+        rm -f "$TEMP_DEB"
+        
+        echo "Google Chrome installed successfully!"
+        ;;
+    fedora|rhel|centos)
+        echo "Detected Red Hat-based system: $OS"
+        
+        # Add Chrome repository
+        sudo tee /etc/yum.repos.d/google-chrome.repo > /dev/null <<'EOF'
+[google-chrome]
+name=google-chrome
+baseurl=http://dl.google.com/linux/chrome/rpm/stable/x86_64
+enabled=1
+gpgcheck=1
+gpgkey=https://dl.google.com/linux/linux_signing_key.pub
+EOF
+        
+        # Install Chrome
+        sudo dnf install -y google-chrome-stable || sudo yum install -y google-chrome-stable
+        
+        echo "Google Chrome installed successfully!"
+        ;;
+    arch|manjaro)
+        echo "Detected Arch-based system: $OS"
+        
+        # Install Chrome from AUR or using yay/paru
+        if command -v yay &> /dev/null; then
+            yay -S --noconfirm google-chrome
+        elif command -v paru &> /dev/null; then
+            paru -S --noconfirm google-chrome
+        else
+            echo "Warning: AUR helper (yay or paru) not found."
+            echo "Please install Google Chrome manually from AUR."
+            exit 1
+        fi
+        
+        echo "Google Chrome installed successfully!"
+        ;;
+    *)
+        echo "Unsupported OS: $OS"
+        echo "Please install Google Chrome manually."
+        exit 1
+        ;;
+esac
+
+# Verify installation
+if command -v google-chrome &> /dev/null; then
+    echo "Verification: $(google-chrome --version)"
+else
+    echo "Error: Chrome installation verification failed"
+    exit 1
+fi

@@ -1,0 +1,4 @@
+data:
+  name: "Desktop User"
+  email: "user@example.com"
+  os: "linux"
